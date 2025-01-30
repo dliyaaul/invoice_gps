@@ -4,19 +4,52 @@ namespace App\Http\Controllers;
 
 use App\Models\Folder;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 class FolderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $folder = Folder::all();
+        $perPage = $request->input('per_page', 10);
+
+        $search = $request->input('search');
+
+        // Ambil data dan filter berdasarkan pencarian (jika ada)
+        $folder = Folder::when($search, function ($query, $search) {
+            return $query->where('login', 'LIKE', "%{$search}%");
+        })->paginate($perPage);
+
+        // Format kolom expired_date menjadi Y-m-d
         $folder->each(function ($item) {
             if ($item->expired_date) {
                 $item->expired_date = Carbon::parse($item->expired_date)->format('Y-m-d');
             }
         });
-        return view('folder', compact('folder'));
+
+        return view('folder', compact('folder', 'perPage'));
+    }
+
+    public function search(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+
+        $search = $request->input('search');
+
+        // Ambil data dan filter berdasarkan pencarian
+        $folder = Folder::when($search, function ($query, $search) {
+            return $query->where('login', 'LIKE', "%{$search}%")
+                ->orWhere('nama', 'LIKE', "%{$search}%"); // Tambahkan kolom lain jika diperlukan
+        })->paginate($perPage);
+
+        // Format kolom expired_date menjadi Y-m-d
+        $folder->each(function ($item) {
+            if ($item->expired_date) {
+                $item->expired_date = Carbon::parse($item->expired_date)->format('Y-m-d');
+            }
+        });
+
+        return view('folder', compact('folder', 'perPage'));
     }
 
     public function store(Request $request)
@@ -65,15 +98,42 @@ class FolderController extends Controller
         $val_data = $request->all();
         $folder->update($val_data);
 
-        return redirect('/folder_device')->with('success', 'Edit User Successfully!');
+        return response()->json(['success' => true, 'message' => 'Edit User Successfully!']);
     }
 
     // Method destroy di FolderController
     public function destroy($id)
     {
-        $folder = Folder::findOrFail($id); // Akan otomatis melempar 404 jika tidak ditemukan
-        $folder->delete();
+        try {
+            // Temukan kategori berdasarkan ID
+            $folder = Folder::findOrFail($id);
 
-        return redirect()->route('folder_device.index')->with('success', 'User Deleted Successfully.');
+            // Periksa apakah kategori memiliki relasi
+            if ($folder->devices()->exists()) { // Ganti 'devices' dengan relasi aktual
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User tidak bisa didelete, karena masih ada data yang terhubung.'
+                ], 400); // Bad Request
+            }
+
+            // Lakukan penghapusan
+            $folder->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User Deleted Successfully.'
+            ], 200); // OK
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found.'
+            ], 404); // Not Found
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while deleting the User.',
+                'error' => $e->getMessage()
+            ], 500); // Internal Server Error
+        }
     }
 }

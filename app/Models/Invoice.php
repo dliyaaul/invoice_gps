@@ -20,7 +20,8 @@ class Invoice extends Model
         'harga',
         'qty',
         'jumlah',
-        'keterangan'
+        'keterangan',
+        'file_path'
     ];
 
     public function device()

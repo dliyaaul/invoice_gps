@@ -153,8 +153,14 @@ class InvoicePreview extends Controller
             }
 
             // Simpan file
-            $fileName = 'filled_invoice.xlsx';
+            $fileName = 'invoice_' . $validated['no_invoice'] . '.xlsx';
+            $filePath = 'public/invoices/' . $fileName;
             $writer = new Xlsx($spreadsheet);
+            $writer->save(storage_path('app/' . $filePath));
+
+            // Simpan path file ke database
+            $invoice->file_path = 'invoices/' . $fileName;
+            $invoice->save();
 
             // Kirim file ke output
             return response()->streamDownload(function () use ($writer) {

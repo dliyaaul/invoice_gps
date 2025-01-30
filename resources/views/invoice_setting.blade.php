@@ -63,6 +63,21 @@
                 Export Invoice
             </button>
 
+            <div class="bg-white dark:bg-gray-900">
+                <label for="table-search" class="sr-only">Search</label>
+                <div class="relative mt-1">
+                    <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="custom-search"
+                        class="block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                        placeholder="Search for items">
+                </div>
+            </div>
             <table id="table-export"
                 class="w-full max-h-screen text-left border-collapse border border-gray-300 dark:border-gray-700">
                 <thead
@@ -135,39 +150,45 @@
 
 @section('js')
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
     <script>
-        const table = new simpleDatatables.DataTable("#table-export", {
-            searchable: true,
-            fixedHeight: false,
-            columns: [
-                // Kolom pertama (checkbox) tidak bisa di-sorting
-                {
-                    select: 0,
-                    sortable: false,
-                    searchable: false,
-                },
-            ],
-        });
-        document.querySelectorAll('.file-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hapus elemen pencarian secara manual
+            const searchElement = document.querySelector('.datatable-search');
+            if (searchElement) {
+                searchElement.remove();
+            }
 
-                const folderId = this.getAttribute('data-id');
-                fetch(`/folders/${folderId}/devices`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.message) {
-                            alert(data.message); // Tampilkan pesan jika tidak ada data
-                            return;
-                        }
+            const table = new simpleDatatables.DataTable("#table-export", {
+                fixedHeight: false,
+                columns: [
+                    // Kolom pertama (checkbox) tidak bisa di-sorting
+                    {
+                        select: 0,
+                        sortable: false,
+                    },
+                ],
+            });
+            document.querySelectorAll('.file-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
 
-                        const tableBody = document.querySelector('#table-export tbody');
-                        tableBody.innerHTML = ''; // Bersihkan tabel sebelum mengisi data baru
+                    const folderId = this.getAttribute('data-id');
+                    fetch(`/folders/${folderId}/devices`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.message) {
+                                alert(data.message); // Tampilkan pesan jika tidak ada data
+                                return;
+                            }
 
-                        data.forEach(device => {
-                            const row = `
+                            const tableBody = document.querySelector('#table-export tbody');
+                            tableBody.innerHTML =
+                                ''; // Bersihkan tabel sebelum mengisi data baru
+
+                            data.forEach(device => {
+                                const row = `
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td><input type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"></td>
                             <td class="font-medium text-gray-900 dark:text-white">${device.id}</td></td>
@@ -177,11 +198,35 @@
                             <td>${device.tgl_install}</td>
                         </tr>
                     `;
-                            tableBody.insertAdjacentHTML('beforeend', row);
-                        });
-                        table.update();
-                    })
-                    .catch(error => console.error('Error:', error));
+                                tableBody.insertAdjacentHTML('beforeend', row);
+                            });
+                            table.update();
+                        })
+                        .catch(error => console.error('Error:', error));
+                });
+            });
+
+            const searchInput = document.getElementById('custom-search');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+
+                // Ambil semua baris tabel
+                const rows = document.querySelectorAll('#table-export tbody tr');
+                rows.forEach(row => {
+                    const columns = row.querySelectorAll('td');
+                    const searchData = Array.from(columns).map(col => col.textContent
+                        .toLowerCase());
+
+                    // Cek apakah ada kecocokan dengan input pencarian
+                    const match = searchData.some(data => data.includes(searchTerm));
+
+                    // Tampilkan atau sembunyikan baris sesuai dengan hasil pencarian
+                    if (match) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
             });
         });
     </script>
@@ -189,14 +234,12 @@
     <script>
         if (document.getElementById("table-export") && typeof simpleDatatables.DataTable !== 'undefined') {
             const table = new simpleDatatables.DataTable("#table-export", {
-                searchable: true,
                 fixedHeight: false,
                 columns: [
                     // Kolom pertama (checkbox) tidak bisa di-sorting
                     {
                         select: 0,
                         sortable: false,
-                        searchable: false
                     },
                 ],
             });

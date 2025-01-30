@@ -62,6 +62,11 @@
                                             role="menuitem">Dashboard</a>
                                     </li>
                                     <li>
+                                        <a href="/forgot-password"
+                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                                            role="menuitem">Update Password</a>
+                                    </li>
+                                    <li>
                                         <a href="{{ route('logout') }}"
                                             onclick="event.preventDefault();
                                  document.getElementById('logout-form').submit();"
@@ -136,6 +141,20 @@
                                         clip-rule="evenodd" />
                                 </svg>
                                 <span class="text-xs mt-2">Setting Invoice</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/archive_invoice"
+                                class="flex flex-col items-center py-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                                <svg class="w-8 h-8 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                                    height="24" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M12 11v5m0 0 2-2m-2 2-2-2M3 6v1a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1Zm2 2v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8H5Z" />
+                                </svg>
+
+                                <span class="text-xs mt-2">Archive Invoice</span>
                             </a>
                         </li>
                     </ul>

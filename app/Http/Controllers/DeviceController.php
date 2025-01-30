@@ -9,16 +9,48 @@ use Illuminate\Http\Request;
 
 class DeviceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $device = Device::all();
         $folder = Folder::all();
+        $perPage = $request->input('per_page', 10);
+
+        $search = $request->input('search');
+
+        // Ambil data dan filter berdasarkan pencarian (jika ada)
+        $device = Device::when($search, function ($query, $search) {
+            return $query->where('nama_nopol', 'LIKE', "%{$search}%");
+        })->paginate($perPage);
+
+        // Format kolom expired_date menjadi Y-m-d
         $device->each(function ($item) {
             if ($item->tgl_install) {
                 $item->tgl_install = Carbon::parse($item->tgl_install)->format('Y-m-d');
             }
         });
-        return view('device', compact('device', 'folder'));
+        return view('device', compact('device', 'folder', 'perPage'));
+    }
+
+    public function search(Request $request)
+    {
+        $folder = Folder::all();
+        $perPage = $request->input('per_page', 10);
+
+        $search = $request->input('search');
+
+        // Ambil data dan filter berdasarkan pencarian
+        $device = Device::when($search, function ($query, $search) {
+            return $query->where('nama_nopol', 'LIKE', "%{$search}%")
+                ->orWhere('imei', 'LIKE', "%{$search}%"); // Tambahkan kolom lain jika diperlukan
+        })->paginate($perPage);
+
+        // Format kolom expired_date menjadi Y-m-d
+        $device->each(function ($item) {
+            if ($item->tgl_install) {
+                $item->tgl_install = Carbon::parse($item->tgl_install)->format('Y-m-d');
+            }
+        });
+
+        return view('device', compact('device', 'folder', 'perPage'));
     }
 
     public function getDevicesByFolder($id)
@@ -52,7 +84,7 @@ class DeviceController extends Controller
     {
         $request->validate([
             'folder_id' => 'required',
-            'nama_nopol' => 'required|unique:device,nama_nopol,' . $id . ',id',
+            'nama_nopol' => 'required|unique:devices,nama_nopol,' . $id . ',id',
             'imei' => 'required|numeric',
             'notlpn' => 'required|numeric',
             'tgl_install' => 'required|date',
@@ -62,7 +94,7 @@ class DeviceController extends Controller
         $val_data = $request->all();
         $device->update($val_data);
 
-        return redirect('/device')->with('success', 'Edit Device Successfully!');
+        return response()->json(['success' => true, 'message' => 'Edit Device Successfully!']);
     }
 
     // Method destroy di FolderController
@@ -71,6 +103,6 @@ class DeviceController extends Controller
         $device = Device::findOrFail($id); // Akan otomatis melempar 404 jika tidak ditemukan
         $device->delete();
 
-        return redirect()->route('device.index')->with('success', 'Device Deleted Successfully.');
+        return response()->json(['success' => true, 'message' => 'Delete Device Successfully!']);
     }
 }

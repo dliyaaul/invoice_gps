@@ -32,6 +32,48 @@ class AuthController extends Controller
         return view('auth.registration');
     }
 
+    public function showVerifyEmailForm()
+    {
+        return view('forgot');
+    }
+
+    public function verifyEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user) {
+            return response()->json(['success' => true, 'message' => 'Email verified. Please update your password.']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Email not found.']);
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user) {
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            Session::flush();
+            Auth::logout();
+
+            return redirect('login')->with('status', 'Password updated successfully. Please log in again.');
+        }
+
+        return back()->withErrors(['email' => 'Failed to update password.']);
+    }
+
     /**
      * Write code on Method
      *
@@ -39,18 +81,51 @@ class AuthController extends Controller
      */
     public function postLogin(Request $request): RedirectResponse
     {
+        $maxAttempts = 3; // Jumlah maksimal percobaan login
+        $lockoutTime = 300; // Waktu lockout dalam detik (1 menit)
+
+        // Validasi input
         $request->validate([
             'name' => 'required',
             'password' => 'required',
         ]);
 
+        // Membaca input username dan password
         $credentials = $request->only('name', 'password');
-        if (Auth::attempt($credentials)) {
-            return redirect()->intended('dashboard')
-                ->withSuccess('You have Successfully loggedin');
+
+        // Mengecek apakah sudah melebihi batas percobaan login
+        $attempts = Session::get('login_attempts', 0);
+        $lockoutTimeLeft = Session::get('lockout_time', 0) - time();
+
+        if ($attempts >= $maxAttempts) {
+            // Jika sudah melebihi percobaan, cek apakah lockout masih berlaku
+            if ($lockoutTimeLeft > 0) {
+                return redirect()->route('login')
+                    ->withError('Terlalu banyak percobaan login gagal. Coba lagi dalam ' . ceil($lockoutTimeLeft / 60) . ' menit.');
+            }
         }
 
-        return redirect("login")->withError('Oppes! Ada Kesalahan Input Pada Username & Password');
+        // Coba login dengan credentials
+        if (Auth::attempt($credentials)) {
+            // Jika login berhasil, reset percobaan login dan lockout time
+            Session::forget('login_attempts');
+            Session::forget('lockout_time');
+
+            return redirect()->intended('dashboard')
+                ->withSuccess('You have Successfully logged in');
+        }
+
+        // Jika login gagal, tambah percobaan login
+        $attempts++;
+        Session::put('login_attempts', $attempts);
+
+        // Jika sudah mencapai batas percobaan, set lockout time
+        if ($attempts >= $maxAttempts) {
+            Session::put('lockout_time', time() + $lockoutTime); // Set lockout untuk waktu tertentu
+        }
+
+        return redirect()->route('login')
+            ->withError('Opps! Ada Kesalahan Input Pada Username & Password');
     }
 
     /**

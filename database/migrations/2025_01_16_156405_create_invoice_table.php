@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('qty');
             $table->string('jumlah');
             $table->text('keterangan');
+            $table->string('file_path')->nullable();
             $table->timestamps();
 
             $table->foreign('device_id')->references('id')->on('devices')->onDelete('cascade');
