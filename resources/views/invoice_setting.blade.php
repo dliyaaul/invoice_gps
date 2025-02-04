@@ -169,6 +169,8 @@
                         sortable: false,
                     },
                 ],
+                perPageSelect: false,
+                perPage: 100
             });
             document.querySelectorAll('.file-link').forEach(link => {
                 link.addEventListener('click', function(e) {
@@ -242,6 +244,8 @@
                         sortable: false,
                     },
                 ],
+                perPageSelect: false,
+                perPage: 100
             });
 
             // Handle select-all checkbox

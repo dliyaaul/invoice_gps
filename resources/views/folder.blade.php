@@ -150,10 +150,9 @@
                         <select name="per_page" id="per_page"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                             onchange="this.form.submit()">
-                            <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
-                            <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
-                            <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
                             <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100</option>
+                            <option value="500" {{ $perPage == 500 ? 'selected' : '' }}>500</option>
+                            <option value="1000" {{ $perPage == 1000 ? 'selected' : '' }}>1000</option>
                         </select>
                     </form>
                 </div>

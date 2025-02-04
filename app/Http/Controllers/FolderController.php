@@ -11,7 +11,7 @@ class FolderController extends Controller
 {
     public function index(Request $request)
     {
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', 100);
 
         $search = $request->input('search');
 
@@ -32,7 +32,7 @@ class FolderController extends Controller
 
     public function search(Request $request)
     {
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', 100);
 
         $search = $request->input('search');
 

@@ -12,7 +12,7 @@ class DeviceController extends Controller
     public function index(Request $request)
     {
         $folder = Folder::all();
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', 100);
 
         $search = $request->input('search');
 
@@ -33,7 +33,7 @@ class DeviceController extends Controller
     public function search(Request $request)
     {
         $folder = Folder::all();
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', 100);
 
         $search = $request->input('search');
 

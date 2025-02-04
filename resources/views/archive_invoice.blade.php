@@ -128,7 +128,9 @@
                             tr.attributes.class = tr.attributes.class.replace(" selected", "");
                         }
                         return tr;
-                    }
+                    },
+                    perPageSelect: [100, 500, 1000],
+                    perPage: 100
                 };
                 if (rowNavigation) {
                     options.rowNavigation = true;
